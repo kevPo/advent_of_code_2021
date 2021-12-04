@@ -1,7 +1,8 @@
-defmodule AOC.SubmarineTest do
+defmodule AOC.Day2.SubmarineTest do
   use ExUnit.Case, async: true
 
-  alias AOC.Submarine
+  alias AOC.Day2.Part1.Submarine, as: Submarine1
+  alias AOC.Day2.Part2.Submarine, as: Submarine2
 
   @input """
   forward 5
@@ -13,10 +14,10 @@ defmodule AOC.SubmarineTest do
   """
 
   test "navigate_old correctly moves Submarine" do
-    assert 150 = Submarine.navigate_old(@input)
+    assert 150 = Submarine1.navigate(@input)
   end
 
   test "navigate correctly moves Submarine" do
-    assert 900 = Submarine.navigate(@input)
+    assert 900 = Submarine2.navigate(@input)
   end
 end
