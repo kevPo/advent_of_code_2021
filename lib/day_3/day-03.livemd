@@ -1,0 +1,110 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 3
+
+## Setup
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+## Part 1
+
+```elixir
+{numbers, length} =
+  Kino.Input.read(input)
+  |> String.split("\n", trim: true)
+  |> Enum.map(&String.split(&1, "", trim: true))
+  |> then(fn numbers -> {numbers, length(Enum.at(numbers, 0))} end)
+
+numbers_by_position =
+  for i <- 0..(length - 1) do
+    Enum.map(numbers, fn number -> String.to_integer(Enum.at(number, i)) end)
+  end
+
+numbers_by_position
+|> Enum.map(fn position -> Enum.frequencies(position) end)
+|> Enum.map(fn position -> Enum.min_max_by(position, fn {_, value} -> value end) end)
+|> Enum.reduce({_gamma = "", _epsilon = ""}, fn {{min, _}, {max, _}}, {gamma, epsilon} ->
+  {gamma <> to_string(max), epsilon <> to_string(min)}
+end)
+|> then(fn {gamma, epsilon} -> [String.to_charlist(gamma), String.to_charlist(epsilon)] end)
+|> Enum.map(fn binary -> List.to_integer(binary, 2) end)
+|> Enum.product()
+```
+
+## Part 2
+
+```elixir
+defmodule DiagnosticReport do
+  def get_all_bits_for_index(ratings, index) do
+    Enum.map(ratings, fn rating -> Enum.at(rating, index) end)
+  end
+
+  def filter_at_index({{min, _}, {max, _}}, :oxy, ratings, index) when min == max do
+    Enum.filter(ratings, fn rating -> Enum.at(rating, index) == 1 end)
+  end
+
+  def filter_at_index({{_min, _}, {max, _}}, :oxy, ratings, index) do
+    Enum.filter(ratings, fn rating -> Enum.at(rating, index) == max end)
+  end
+
+  def filter_at_index({{min, _}, {max, _}}, :c02, ratings, index) when min == max do
+    Enum.filter(ratings, fn rating -> Enum.at(rating, index) == 0 end)
+  end
+
+  def filter_at_index({{min, _}, {_max, _}}, :c02, ratings, index) do
+    Enum.filter(ratings, fn rating -> Enum.at(rating, index) == min end)
+  end
+
+  def find_rating({numbers, length}, rating_type) do
+    {numbers, length, rating_type}
+    |> get_binary_number_for_rating()
+    |> binary_list_to_decimal()
+  end
+
+  def get_binary_number_for_rating({numbers, length, rating_type}) do
+    0..(length - 1)
+    |> Enum.reduce_while(_filtered = numbers, fn index, filtered ->
+      filtered =
+        filtered
+        |> get_all_bits_for_index(index)
+        |> Enum.frequencies()
+        |> Enum.min_max_by(fn {_k, v} -> v end)
+        |> filter_at_index(rating_type, filtered, index)
+
+      if Enum.count(filtered) == 1, do: {:halt, Enum.at(filtered, 0)}, else: {:cont, filtered}
+    end)
+  end
+
+  def parse(input) do
+    input
+    |> String.split("\n", trim: true)
+    |> Enum.map(&String.split(&1, "", trim: true))
+    |> Enum.map(fn strings -> Enum.map(strings, &String.to_integer/1) end)
+    |> then(fn numbers -> {numbers, length(Enum.at(numbers, 0))} end)
+  end
+
+  def binary_list_to_decimal(binary_list) do
+    binary_list
+    |> Enum.join("")
+    |> String.to_charlist()
+    |> List.to_integer(2)
+  end
+
+  def calculate_life_support(diagnostics) do
+    oxygen_generator_rating = find_rating(diagnostics, :oxy)
+    c02_scrubber_rating = find_rating(diagnostics, :c02)
+
+    oxygen_generator_rating * c02_scrubber_rating
+  end
+end
+
+Kino.Input.read(input)
+|> DiagnosticReport.parse()
+|> DiagnosticReport.calculate_life_support()
+```

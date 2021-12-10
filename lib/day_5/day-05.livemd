@@ -1,0 +1,69 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 5
+
+## Section
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+lines =
+  Kino.Input.read(input)
+  |> String.split("\n", trim: true)
+  |> Enum.map(fn x ->
+    x
+    |> String.split([",", " -> "], trim: true)
+    |> Enum.map(&String.to_integer/1)
+  end)
+```
+
+## Part 1
+
+```elixir
+lines
+|> Enum.reduce(%{}, fn
+  [x, y1, x, y2], grid ->
+    Enum.reduce(y1..y2, grid, fn y, grid ->
+      Map.update(grid, {x, y}, 1, &(&1 + 1))
+    end)
+
+  [x1, y, x2, y], grid ->
+    Enum.reduce(x1..x2, grid, fn x, grid ->
+      Map.update(grid, {x, y}, 1, &(&1 + 1))
+    end)
+
+  _, grid ->
+    grid
+end)
+|> Enum.count(fn {_, v} -> v > 1 end)
+```
+
+## Part 2
+
+```elixir
+defmodule Count do
+  def call(lines) do
+    lines
+    |> Enum.reduce(%{}, fn
+      [x, y1, x, y2], grid -> calc(Stream.cycle([x]), y1..y2, grid)
+      [x1, y, x2, y], grid -> calc(x1..x2, Stream.cycle([y]), grid)
+      [x1, y1, x2, y2], grid -> calc(x1..x2, y1..y2, grid)
+    end)
+    |> Enum.count(fn {_, v} -> v > 1 end)
+  end
+
+  defp calc(xs, ys, grid) do
+    Enum.reduce(Enum.zip(xs, ys), grid, fn {x, y}, grid ->
+      Map.update(grid, {x, y}, 1, &(&1 + 1))
+    end)
+  end
+end
+
+Count.call(lines)
+```

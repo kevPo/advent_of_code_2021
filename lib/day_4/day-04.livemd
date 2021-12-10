@@ -1,0 +1,120 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 4
+
+## Setup
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+## Part 1
+
+```elixir
+defmodule Board do
+  @enforce_keys [:number_keys]
+  defstruct [:number_keys, spaces: Tuple.duplicate(Tuple.duplicate(false, 5), 5)]
+
+  def new(number_keys) when is_map(number_keys) do
+    %Board{number_keys: number_keys}
+  end
+
+  def mark(%Board{number_keys: number_keys} = board, number) do
+    case number_keys do
+      %{^number => {row, col}} ->
+        put_in(board, [Access.key(:spaces), Access.elem(row), Access.elem(col)], true)
+
+      %{} ->
+        board
+    end
+  end
+
+  def unmarked_sum(%Board{number_keys: number_keys, spaces: spaces}) do
+    Enum.sum(
+      for {number, {row, col}} <- number_keys,
+          spaces |> elem(row) |> elem(col) == false,
+          do: number
+    )
+  end
+
+  def won?(%Board{spaces: spaces}) do
+    row_won?(spaces) or column_won?(spaces)
+  end
+
+  defp column_won?(spaces) do
+    Enum.any?(0..4, fn col ->
+      Enum.all?(0..4, fn row -> spaces |> elem(row) |> elem(col) end)
+    end)
+  end
+
+  defp row_won?(spaces) do
+    Enum.any?(0..4, fn row ->
+      elem(spaces, row) == {true, true, true, true, true}
+    end)
+  end
+end
+```
+
+```elixir
+[numbers | grids] =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+
+boards =
+  grids
+  |> Enum.chunk_every(5)
+  |> Enum.map(fn rows ->
+    Board.new(
+      for {line, row} <- Enum.with_index(rows, 0),
+          {number, col} <- Enum.with_index(String.split(line), 0),
+          into: %{} do
+        {String.to_integer(number), {row, col}}
+      end
+    )
+  end)
+
+numbers =
+  numbers
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+```
+
+```elixir
+{number, board = %Board{}} =
+  Enum.reduce_while(numbers, boards, fn number, boards ->
+    boards = Enum.map(boards, &Board.mark(&1, number))
+
+    if board = Enum.find(boards, &Board.won?/1) do
+      {:halt, {number, board}}
+    else
+      {:cont, boards}
+    end
+  end)
+
+number * Board.unmarked_sum(board)
+```
+
+## Part 2
+
+```elixir
+{number, board = %Board{}} =
+  Enum.reduce_while(numbers, boards, fn number, boards ->
+    boards = Enum.map(boards, &Board.mark(&1, number))
+
+    case Enum.reject(boards, &Board.won?/1) do
+      [] ->
+        [board] = boards
+        {:halt, {number, board}}
+
+      boards ->
+        {:cont, boards}
+    end
+  end)
+
+number * Board.unmarked_sum(board)
+```

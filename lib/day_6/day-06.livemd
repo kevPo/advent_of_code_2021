@@ -1,0 +1,58 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 6
+
+## Setup
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+starter_fish =
+  input
+  |> Kino.Input.read()
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+```
+
+## Part 1
+
+```elixir
+defmodule FishCount1 do
+  def add_day(fishes) do
+    Enum.reduce(fishes, [], fn
+      0, new_day -> [6, 8 | new_day]
+      day, new_day -> [day - 1 | new_day]
+    end)
+  end
+end
+
+1..80
+|> Enum.reduce(fish = starter_fish, fn
+  _day, fish -> FishCount1.add_day(fish)
+end)
+|> Enum.count()
+```
+
+## Part 2
+
+```elixir
+defmodule FishCount2 do
+  def add_day({day0, day1, day2, day3, day4, day5, day6, day7, day8}) do
+    {day1, day2, day3, day4, day5, day6, day7 + day0, day8, day0}
+  end
+end
+
+frequencies = Enum.frequencies(starter_fish)
+
+day_counts =
+  0..8
+  |> Enum.map(fn i -> frequencies[i] || 0 end)
+  |> List.to_tuple()
+
+1..256
+|> Enum.reduce(day_counts, fn _, days -> FishCount2.add_day(days) end)
+|> Tuple.sum()
+```

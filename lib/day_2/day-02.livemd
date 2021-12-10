@@ -1,0 +1,67 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 2
+
+## Setup
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+```
+
+```elixir
+input = Kino.Input.textarea("Paste input here:")
+```
+
+## Part 1
+
+```elixir
+defmodule Parser do
+  def parse_move("forward " <> units), do: {:forward, String.to_integer(units)}
+  def parse_move("down " <> units), do: {:down, String.to_integer(units)}
+  def parse_move("up " <> units), do: {:up, String.to_integer(units)}
+end
+
+defmodule Submarine do
+  def move({:forward, units}, {horizontal, depth}) do
+    {horizontal + units, depth}
+  end
+
+  def move({:down, units}, {horizontal, depth}) do
+    {horizontal, depth + units}
+  end
+
+  def move({:up, units}, {horizontal, depth}) do
+    {horizontal, depth - units}
+  end
+end
+
+Kino.Input.read(input)
+|> String.split("\n", trim: true)
+|> Enum.map(&Parser.parse_move/1)
+|> Enum.reduce({horizontal = 0, depth = 0}, &Submarine.move/2)
+|> then(fn {horizontal, depth} -> horizontal * depth end)
+```
+
+## Part 2
+
+```elixir
+defmodule Submarine do
+  def move({:forward, units}, {horizontal, depth, aim}) do
+    {horizontal + units, depth + aim * units, aim}
+  end
+
+  def move({:down, units}, {horizontal, depth, aim}) do
+    {horizontal, depth, aim + units}
+  end
+
+  def move({:up, units}, {horizontal, depth, aim}) do
+    {horizontal, depth, aim - units}
+  end
+end
+
+Kino.Input.read(input)
+|> String.split("\n", trim: true)
+|> Enum.map(&Parser.parse_move/1)
+|> Enum.reduce({horizontal = 0, depth = 0, aim = 0}, &Submarine.move/2)
+|> then(fn {horizontal, depth, _aim} -> horizontal * depth end)
+```

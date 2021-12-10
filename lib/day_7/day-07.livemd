@@ -1,0 +1,50 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 7
+
+## Setup
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+crabs =
+  input
+  |> Kino.Input.read()
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+
+{min, max} = Enum.min_max(crabs)
+
+min..max
+|> Enum.map(fn i ->
+  crabs |> Enum.map(fn j -> abs(i - j) end) |> Enum.sum()
+end)
+|> Enum.min()
+```
+
+## Part 2
+
+```elixir
+crabs =
+  input
+  |> Kino.Input.read()
+  |> String.split(",")
+  |> Enum.map(&String.to_integer/1)
+
+{min, max} = Enum.min_max(crabs)
+
+min..max
+|> Enum.map(fn i ->
+  crabs
+  |> Enum.map(fn j ->
+    x = abs(i - j)
+    x * (x + 1) / 2
+  end)
+  |> Enum.sum()
+end)
+|> Enum.min()
+|> round()
+```
