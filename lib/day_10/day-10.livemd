@@ -1,0 +1,101 @@
+<!-- vim: syntax=markdown -->
+
+# Advent of Code Day 10
+
+## Setup
+
+```elixir
+Mix.install([{:kino, github: "livebook-dev/kino"}])
+input = Kino.Input.textarea("Paste input here:")
+```
+
+```elixir
+lines =
+  input
+  |> Kino.Input.read()
+  |> String.split("\n", trim: true)
+```
+
+## Part 1
+
+```elixir
+scores = %{
+  ")" => 3,
+  "]" => 57,
+  "}" => 1197,
+  ">" => 25137
+}
+
+openings = ["{", "(", "<", "["]
+closings = ["}", ")", ">", "]"]
+
+pairs = %{
+  "{" => "}",
+  "}" => "{",
+  "(" => ")",
+  ")" => "(",
+  "<" => ">",
+  ">" => "<",
+  "[" => "]",
+  "]" => "["
+}
+
+lines
+|> Enum.map(fn line ->
+  line
+  |> String.split("", trim: true)
+  |> Enum.reduce_while({[], []}, fn x, {opens, closes} ->
+    cond do
+      x in openings ->
+        {:cont, {[x | opens], [pairs[x] | closes]}}
+
+      x in closings and pairs[x] in opens and x == hd(closes) ->
+        {:cont, {List.delete(opens, pairs[x]), tl(closes)}}
+
+      x in closings and x != hd(closes) ->
+        {:halt, x}
+    end
+  end)
+end)
+|> Enum.reject(&is_tuple/1)
+|> Enum.map(fn x -> scores[x] end)
+|> Enum.sum()
+```
+
+## Part 2
+
+```elixir
+autocomplete_scores = %{
+  ")" => 1,
+  "]" => 2,
+  "}" => 3,
+  ">" => 4
+}
+
+scores =
+  lines
+  |> Enum.map(fn line ->
+    line
+    |> String.split("", trim: true)
+    |> Enum.reduce_while({[], []}, fn x, {opens, closes} ->
+      cond do
+        x in openings ->
+          {:cont, {[x | opens], [pairs[x] | closes]}}
+
+        x in closings and pairs[x] in opens and x == hd(closes) ->
+          {:cont, {List.delete(opens, pairs[x]), tl(closes)}}
+
+        x in closings and x != hd(closes) ->
+          {:halt, x}
+      end
+    end)
+  end)
+  |> Enum.reject(fn x -> is_binary(x) end)
+  |> Enum.map(fn {_, closings} -> closings end)
+  |> Enum.map(fn x ->
+    Enum.reduce(x, 0, fn y, score -> 5 * score + autocomplete_scores[y] end)
+  end)
+  |> Enum.sort()
+
+Enum.at(scores, Integer.floor_div(length(scores), 2))
+```
